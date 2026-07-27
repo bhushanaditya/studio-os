@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Studio OS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #1447E6;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+    background-size: 20px 20px;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  #app {
+    width: 100%;
+    max-width: 420px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .screen { display: none; padding: 20px; flex: 1; }
+  .screen.active { display: block; }
+
+  h1.logo {
+    font-size: 34px;
+    font-weight: 700;
+    color: #FFCE45;
+    line-height: 1;
+    letter-spacing: -1px;
+    margin-bottom: 4px;
+  }
+  .subtitle { font-size: 12px; color: #ffffff; margin-bottom: 18px; }
+
+  .alert {
+    background: #E8382F;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+    padding: 10px 12px;
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .alert.calm { background: #3FA34D; }
+
+  .person-row {
+    background: #3FA34D;
+    border: 1px solid #ffffff;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  .person-row.busy { background: #E8382F; }
+  .person-row span.name { font-weight: 700; color: #fff; }
+  .person-row span.status { font-size: 11px; color: #fff; }
+
+  h2.person-title { font-size: 26px; font-weight: 700; color: #FFCE45; margin-bottom: 14px; }
+
+  .requests-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #FFCE45;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .request-card {
+    border: 1px solid #ffffff;
+    background: #F5A623;
+    padding: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .request-card .from { font-weight: 700; color: #1447E6; font-size: 13px; }
+  .request-card .text { font-size: 12px; color: #1447E6; margin-top: 2px; }
+  #requests-wrap { margin-bottom: 20px; }
+
+  .column-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 16px 0 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .column-title:first-of-type { margin-top: 0; }
+  .add-btn {
+    border: 1px solid #ffffff;
+    background: transparent;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    width: 20px;
+    height: 20px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .card {
+    border: 1px solid #FFCE45;
+    background: #ffffff;
+    padding: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .card.upnext { background: #FFCE45; border-color: #ffffff; }
+  .card.blocked { background: #F5A623; border-color: #1447E6; border-width: 2px; }
+  .card .client { font-weight: 700; color: #1447E6; font-size: 14px; }
+  .card .meta { font-size: 12px; color: #1447E6; margin-top: 2px; }
+  .card .waiting { font-size: 11px; font-weight: 700; color: #1447E6; margin-top: 4px; }
+  .card .note-count { font-size: 11px; color: #1447E6; margin-top: 4px; }
+
+  .card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+  }
+  .dots { display: flex; gap: 6px; }
+  .dot {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #1447E6;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+  }
+  .dot.filled { background: #1447E6; }
+  .start-btn {
+    border: 1px solid #1447E6;
+    background: transparent;
+    color: #1447E6;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+
+  .empty {
+    border: 1px dashed #ffffff;
+    padding: 10px;
+    font-size: 12px;
+    color: #ffffff;
+  }
+
+  nav.bottom-nav {
+    display: flex;
+    background: #0b0b0b;
+    margin: 0 16px 16px;
+    border: 1px solid #ffffff;
+  }
+  nav.bottom-nav button {
+    flex: 1;
+    border: none;
+    padding: 14px 0;
+    background: #0b0b0b;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  nav.bottom-nav button.active { background: #FFCE45; color: #1447E6; }
+
+  @media (min-width: 768px) {
+    #app { max-width: 900px; }
+    .screen { padding: 40px; }
+    h1.logo { font-size: 48px; }
+    .person-row { max-width: 400px; }
+    .board {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+  }
+
+  /* edit overlay */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  .overlay.active { display: flex; }
+  .modal {
+    background: #ffffff;
+    border: 1px solid #0b0b0b;
+    width: 90%;
+    max-width: 320px;
+    padding: 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h3 { font-size: 16px; margin-bottom: 14px; color: #1447E6; }
+  .modal label { display: block; font-size: 12px; font-weight: 700; margin: 10px 0 4px; color: #1447E6; }
+  .modal input, .modal select {
+    width: 100%;
+    border: 1px solid #1447E6;
+    padding: 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .modal-hint { font-size: 11px; color: #666; margin-top: 4px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+  .modal-actions button {
+    flex: 1;
+    border: 1px solid #0b0b0b;
+    padding: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 13px;
+    text-transform: uppercase;
+  }
+  .btn-save { background: #FFCE45; color: #1447E6; }
+  .btn-delete { background: #E8382F; color: #ffffff; }
+  .btn-cancel { background: #ffffff; color: #0b0b0b; }
+
+  .notes-section { border-top: 1px solid #ddd; margin-top: 16px; padding-top: 12px; }
+  .note {
+    border: 1px solid #1447E6;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: #1447E6;
+  }
+  .note b { display: block; font-size: 11px; }
+  .note-add-row { display: flex; gap: 6px; margin-top: 8px; }
+  .note-add-row select { width: 90px; flex-shrink: 0; }
+  .note-add-row button {
+    border: 1px solid #1447E6;
+    background: #FFCE45;
+    color: #1447E6;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 0 10px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <h1 class="logo">STUDIO<br>OS</h1>
+    <p class="subtitle">this week's board</p>
+    <div id="home-alert"></div>
+    <div id="home-people"></div>
+  </div>
+
+  <!-- NABH -->
+  <div class="screen" id="screen-nabh">
+    <h2 class="person-title">Nabh</h2>
+    <div id="requests-nabh"></div>
+    <div class="board" id="board-nabh"></div>
+  </div>
+
+  <!-- ADI -->
+  <div class="screen" id="screen-adi">
+    <h2 class="person-title">Adi</h2>
+    <div id="requests-adi"></div>
+    <div class="board" id="board-adi"></div>
+  </div>
+
+  <!-- AVI -->
+  <div class="screen" id="screen-avi">
+    <h2 class="person-title">Avi</h2>
+    <div id="requests-avi"></div>
+    <div class="board" id="board-avi"></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button id="nav-home" class="active" onclick="showScreen('home')">Home</button>
+    <button id="nav-nabh" onclick="showScreen('nabh')">Nabh</button>
+    <button id="nav-adi" onclick="showScreen('adi')">Adi</button>
+    <button id="nav-avi" onclick="showScreen('avi')">Avi</button>
+  </nav>
+
+</div>
+
+<!-- EDIT MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modal-title">Edit card</h3>
+    <label>Client name</label>
+    <input id="f-client" type="text" placeholder="e.g. BLEND" />
+    <label>Due date</label>
+    <input id="f-due" type="text" placeholder="e.g. Wed, or 31 Jul" />
+    <label>Column</label>
+    <select id="f-column">
+      <option value="inprocess">In process</option>
+      <option value="upnext">Up next</option>
+      <option value="done">Done</option>
+    </select>
+    <label>Waiting on someone? (optional)</label>
+    <select id="f-needsfrom">
+      <option value="">No one</option>
+    </select>
+    <input id="f-needstext" type="text" placeholder="what do you need from them?" style="margin-top:8px" />
+
+    <div class="notes-section" id="notes-section" style="display:none">
+      <label style="margin-top:0">Notes / questions</label>
+      <div id="notes-list"></div>
+      <div class="note-add-row">
+        <select id="f-note-author"></select>
+        <input id="f-note-text" type="text" placeholder="add a note or question" />
+        <button onclick="addNote()">Add</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-delete" id="btn-delete" onclick="deleteCard()">Delete</button>
+      <button class="btn-save" onclick="saveCard()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  var firebaseConfig = {
+    apiKey: "AIzaSyDsTS3GOTH1efb-3EG-eYBeayntK6oU44g",
+    authDomain: "studio-os-d7e53.firebaseapp.com",
+    projectId: "studio-os-d7e53",
+    storageBucket: "studio-os-d7e53.firebasestorage.app",
+    messagingSenderId: "58400373824",
+    appId: "1:58400373824:web:94d8f0cb10f15827e5b3a5"
+  };
+  var fbApp = initializeApp(firebaseConfig);
+  var db = getFirestore(fbApp);
+  var boardRef = doc(db, "boards", "main");
+
+  var PEOPLE = ['nabh', 'adi', 'avi'];
+  var COLUMN_LABELS = { inprocess: 'In process', upnext: 'Up next', done: 'Done' };
+
+  var defaultData = {
+    nabh: {
+      status: 'SOME ROOM',
+      cards: [
+        { id: 'n1', client: 'BLEND', due: 'Wed', column: 'inprocess', progress: 1, needsFrom: 'adi', needsText: 'paper cup printed — for reel', notes: [] },
+        { id: 'n2', client: 'AutoPower', due: 'Thu', column: 'inprocess', progress: 0, needsFrom: '', needsText: '', notes: [] },
+        { id: 'n3', client: 'Personal', due: 'Ongoing', column: 'inprocess', progress: 0, needsFrom: '', needsText: '', notes: [] },
+        { id: 'n4', client: 'Twoworking', due: 'Mon', column: 'upnext', progress: 0, needsFrom: '', needsText: '', notes: [] },
+        { id: 'n5', client: 'Twoworking', due: 'Tue', column: 'upnext', progress: 0, needsFrom: '', needsText: '', notes: [] },
+        { id: 'n6', client: 'Noon Bar', due: 'Fri', column: 'upnext', progress: 0, needsFrom: '', needsText: '', notes: [] }
+      ]
+    },
+    adi: {
+      status: 'HEADS DOWN',
+      cards: [
+        { id: 'a1', client: 'AutoPower', due: '31 Jul', column: 'inprocess', progress: 2, needsFrom: '', needsText: '', notes: [] },
+        { id: 'a2', client: 'Studio Kôz', due: '31 Jul', column: 'inprocess', progress: 1, needsFrom: '', needsText: '', notes: [] },
+        { id: 'a3', client: 'BML', due: 'Next wk', column: 'inprocess', progress: 0, needsFrom: '', needsText: '', notes: [] },
+        { id: 'a4', client: 'BLEND', due: 'Thu', column: 'upnext', progress: 0, needsFrom: '', needsText: '', notes: [] }
+      ]
+    },
+    avi: {
+      status: 'SOME ROOM',
+      cards: [
+        { id: 'v1', client: 'AutoPower', due: 'Tue', column: 'inprocess', progress: 1, needsFrom: '', needsText: '', notes: [] },
+        { id: 'v2', client: 'Twoworking', due: 'Wed', column: 'inprocess', progress: 0, needsFrom: '', needsText: '', notes: [] },
+        { id: 'v3', client: 'Personal', due: 'Ongoing', column: 'inprocess', progress: 0, needsFrom: '', needsText: '', notes: [] },
+        { id: 'v4', client: 'Twoworking', due: 'Mon', column: 'upnext', progress: 0, needsFrom: '', needsText: '', notes: [] },
+        { id: 'v5', client: 'Twoworking', due: 'Tue', column: 'upnext', progress: 0, needsFrom: '', needsText: '', notes: [] },
+        { id: 'v6', client: 'Noon Bar', due: 'Next wk', column: 'upnext', progress: 0, needsFrom: '', needsText: '', notes: [] }
+      ]
+    }
+  };
+
+  var data = null;
+  var editing = { person: null, id: null };
+
+  onSnapshot(boardRef, function(snap) {
+    if (snap.exists()) {
+      data = snap.data();
+    } else {
+      data = JSON.parse(JSON.stringify(defaultData));
+      setDoc(boardRef, data);
+    }
+    render();
+  }, function(err) {
+    console.error('Firestore error', err);
+    document.getElementById('app').innerHTML = '<p style="color:#fff;padding:20px">Could not connect to the shared board. Check your internet connection and refresh.</p>';
+  });
+
+  function saveData() {
+    setDoc(boardRef, data);
+  }
+
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    document.getElementById('screen-' + name).classList.add('active');
+    document.querySelectorAll('.bottom-nav button').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('nav-' + name).classList.add('active');
+  }
+
+  // find every card across all people that is waiting on `person`
+  function requestsFor(person) {
+    var out = [];
+    PEOPLE.forEach(function(owner) {
+      data[owner].cards.forEach(function(c) {
+        if (c.needsFrom === person) out.push({ owner: owner, card: c });
+      });
+    });
+    return out;
+  }
+
+  function render() {
+    var anyUrgent = false;
+    var peopleHtml = '';
+    PEOPLE.forEach(function(p) {
+      var busy = data[p].status === 'HEADS DOWN';
+      if (busy) anyUrgent = true;
+      peopleHtml += '<div class="person-row' + (busy ? ' busy' : '') + '" onclick="showScreen(\'' + p + '\')">' +
+        '<span class="name">' + cap(p) + '</span><span class="status">' + data[p].status + '</span></div>';
+    });
+    document.getElementById('home-people').innerHTML = peopleHtml;
+    document.getElementById('home-alert').innerHTML = anyUrgent
+      ? '<div class="alert">⚠ SOMEONE IS HEADS DOWN — CHECK IN BEFORE ADDING WORK</div>'
+      : '<div class="alert calm">✓ EVERYONE HAS SOME ROOM</div>';
+
+    PEOPLE.forEach(function(p) {
+      renderRequests(p);
+      renderBoard(p);
+    });
+  }
+
+  function renderRequests(p) {
+    var wrap = document.getElementById('requests-' + p);
+    var reqs = requestsFor(p);
+    if (!reqs.length) { wrap.innerHTML = ''; return; }
+    var html = '<div id="requests-wrap"><div class="requests-title">Asked of you (' + reqs.length + ')</div>';
+    reqs.forEach(function(r) {
+      html += '<div class="request-card" onclick="openModal(\'' + r.owner + '\', \'' + r.card.id + '\')">' +
+        '<div class="from">' + cap(r.owner) + ' needs:</div>' +
+        '<div class="text">' + escapeHtml(r.card.needsText) + '</div></div>';
+    });
+    html += '</div>';
+    wrap.innerHTML = html;
+  }
+
+  function renderBoard(p) {
+    var el = document.getElementById('board-' + p);
+    var cols = ['inprocess', 'upnext', 'done'];
+    var html = '';
+    cols.forEach(function(col) {
+      var cards = data[p].cards.filter(function(c) { return c.column === col; });
+      html += '<div>';
+      html += '<div class="column-title">' + COLUMN_LABELS[col];
+      if (col !== 'done') {
+        html += '<button class="add-btn" onclick="openModal(\'' + p + '\', null, \'' + col + '\')">+</button>';
+      }
+      html += '</div>';
+      if (cards.length === 0) {
+        html += '<div class="empty">nothing here yet</div>';
+      } else {
+        cards.forEach(function(c) {
+          var blocked = !!c.needsFrom;
+          var cls = 'card' + (col === 'upnext' ? ' upnext' : '') + (blocked ? ' blocked' : '');
+          html += '<div class="' + cls + '" onclick="openModal(\'' + p + '\', \'' + c.id + '\')">' +
+            '<div class="client">' + escapeHtml(c.client) + '</div>' +
+            '<div class="meta">due ' + escapeHtml(c.due) + '</div>';
+          if (blocked) {
+            html += '<div class="waiting">⏳ waiting on ' + cap(c.needsFrom) + '</div>';
+          }
+          if (c.notes && c.notes.length) {
+            html += '<div class="note-count">💬 ' + c.notes.length + ' note' + (c.notes.length > 1 ? 's' : '') + '</div>';
+          }
+          if (col === 'inprocess') {
+            html += '<div class="card-row"><div class="dots">';
+            for (var i = 1; i <= 3; i++) {
+              html += '<button class="dot' + (c.progress >= i ? ' filled' : '') + '" onclick="setProgress(event,\'' + p + '\',\'' + c.id + '\',' + i + ')"></button>';
+            }
+            html += '</div></div>';
+          } else if (col === 'upnext') {
+            html += '<div class="card-row"><span></span><button class="start-btn" onclick="startCard(event,\'' + p + '\',\'' + c.id + '\')">Start ▸</button></div>';
+          }
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+    });
+    el.innerHTML = html;
+  }
+
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+  }
+
+  function setProgress(event, person, id, level) {
+    event.stopPropagation();
+    var card = data[person].cards.find(function(c) { return c.id === id; });
+    card.progress = (card.progress === level) ? level - 1 : level;
+    if (card.progress >= 3) {
+      card.column = 'done';
+    }
+    saveData();
+    render();
+  }
+
+  function startCard(event, person, id) {
+    event.stopPropagation();
+    var card = data[person].cards.find(function(c) { return c.id === id; });
+    card.column = 'inprocess';
+    card.progress = 0;
+    saveData();
+    render();
+  }
+
+  function renderNotes(card) {
+    var list = document.getElementById('notes-list');
+    if (!card.notes || !card.notes.length) {
+      list.innerHTML = '<p style="font-size:12px;color:#666">no notes yet</p>';
+      return;
+    }
+    var html = '';
+    card.notes.forEach(function(n) {
+      html += '<div class="note"><b>' + escapeHtml(n.by) + '</b>' + escapeHtml(n.text) + '</div>';
+    });
+    list.innerHTML = html;
+  }
+
+  function addNote() {
+    var text = document.getElementById('f-note-text').value.trim();
+    var author = document.getElementById('f-note-author').value;
+    if (!text) return;
+    var card = data[editing.person].cards.find(function(c) { return c.id === editing.id; });
+    card.notes = card.notes || [];
+    card.notes.push({ by: cap(author), text: text });
+    saveData();
+    document.getElementById('f-note-text').value = '';
+    renderNotes(card);
+  }
+
+  function openModal(person, id, defaultColumn) {
+    editing.person = person;
+    editing.id = id;
+    var titleEl = document.getElementById('modal-title');
+    var deleteBtn = document.getElementById('btn-delete');
+
+    var needsSelect = document.getElementById('f-needsfrom');
+    needsSelect.innerHTML = '<option value="">No one</option>';
+    PEOPLE.filter(function(x) { return x !== person; }).forEach(function(x) {
+      needsSelect.innerHTML += '<option value="' + x + '">' + cap(x) + '</option>';
+    });
+
+    var authorSelect = document.getElementById('f-note-author');
+    authorSelect.innerHTML = '';
+    PEOPLE.forEach(function(x) {
+      authorSelect.innerHTML += '<option value="' + x + '">' + cap(x) + '</option>';
+    });
+
+    if (id) {
+      var card = data[person].cards.find(function(c) { return c.id === id; });
+      titleEl.textContent = 'Edit card';
+      document.getElementById('f-client').value = card.client;
+      document.getElementById('f-due').value = card.due;
+      document.getElementById('f-column').value = card.column;
+      needsSelect.value = card.needsFrom || '';
+      document.getElementById('f-needstext').value = card.needsText || '';
+      deleteBtn.style.display = 'block';
+      document.getElementById('notes-section').style.display = 'block';
+      document.getElementById('f-note-text').value = '';
+      renderNotes(card);
+    } else {
+      titleEl.textContent = 'New card';
+      document.getElementById('f-client').value = '';
+      document.getElementById('f-due').value = '';
+      document.getElementById('f-column').value = defaultColumn || 'inprocess';
+      needsSelect.value = '';
+      document.getElementById('f-needstext').value = '';
+      deleteBtn.style.display = 'none';
+      document.getElementById('notes-section').style.display = 'none';
+    }
+    document.getElementById('overlay').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('active');
+  }
+
+  function saveCard() {
+    var client = document.getElementById('f-client').value.trim();
+    var due = document.getElementById('f-due').value.trim();
+    var column = document.getElementById('f-column').value;
+    var needsFrom = document.getElementById('f-needsfrom').value;
+    var needsText = document.getElementById('f-needstext').value.trim();
+    if (!client) { alert('Add a client name'); return; }
+    if (!due) { due = '—'; }
+
+    if (editing.id) {
+      var card = data[editing.person].cards.find(function(c) { return c.id === editing.id; });
+      card.client = client;
+      card.due = due;
+      card.column = column;
+      card.needsFrom = needsFrom;
+      card.needsText = needsFrom ? needsText : '';
+      if (card.progress === undefined) card.progress = 0;
+    } else {
+      data[editing.person].cards.push({
+        id: editing.person + '-' + Date.now(),
+        client: client,
+        due: due,
+        column: column,
+        progress: 0,
+        needsFrom: needsFrom,
+        needsText: needsFrom ? needsText : '',
+        notes: []
+      });
+    }
+    saveData();
+    render();
+    closeModal();
+  }
+
+  function deleteCard() {
+    var list = data[editing.person].cards;
+    var idx = list.findIndex(function(c) { return c.id === editing.id; });
+    if (idx > -1) list.splice(idx, 1);
+    saveData();
+    render();
+    closeModal();
+  }
+
+  window.showScreen = showScreen;
+  window.openModal = openModal;
+  window.closeModal = closeModal;
+  window.saveCard = saveCard;
+  window.deleteCard = deleteCard;
+  window.setProgress = setProgress;
+  window.startCard = startCard;
+  window.addNote = addNote;
+</script>
+
+</body>
+</html>
